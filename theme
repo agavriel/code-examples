@@ -1,0 +1,4 @@
+my_theme <- theme(plot.background = element_rect(fill = "whitesmoke"),
+                              panel.background = element_rect(fill = "whitesmoke"),
+                              panel.grid.major = element_line(colour = "gray80"),
+                              panel.grid.minor=element_blank())
