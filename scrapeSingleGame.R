@@ -1,5 +1,5 @@
 #Re-worked Single Game NHL Scraper for post-game charts.
-setwd("C:/Users/abg68/Desktop/R/NHL Scrape/20172018")
+setwd("C:/Users/abg68/Desktop/R/NHL Scrape/20182019")
 
 #Read in libraries
 library(jsonlite)
@@ -11,11 +11,11 @@ library(grid)
 library(reshape)
 
 #Season
-season <- "20172018"
+season <- "20182019"
 
 #Game code
-gcode <- 21105
-jsonGameCode <- paste0(20170, gcode) #replace 20160 with correct season yr start
+gcode <- 20645
+jsonGameCode <- paste0(20180, gcode) #replace season start as necessary
 
 #Start with json page
 
@@ -463,6 +463,9 @@ shotAttemptPlot$SAA60 <- ifelse(shotAttemptPlot$Team == awayTeam,
                                 perSixty(shotAttemptPlot$HomeFor.x, shotAttemptPlot$evTOI),
                                 perSixty(shotAttemptPlot$AwayFor.x, shotAttemptPlot$evTOI))
 
+#Get TOI in minute form
+shotAttemptPlot$evTOI60 <- shotAttemptPlot$evTOI/60
+
 #Faceoff calculations
 #Subset full PBP by faceoff events
 Faceoffs <- subset(PBP2, etype == "FAC")
@@ -551,6 +554,7 @@ ShotChart$ycoord2 <- ifelse(ShotChart$ev.team == awayTeam,
 my_theme <- theme(plot.background = element_rect(fill = "whitesmoke"),
                   panel.background = element_rect(fill = "whitesmoke"),
                   panel.grid.major = element_line(colour = "gray80"),
+                  legend.position = "bottom",
                   panel.grid.minor=element_blank())
 
 my_theme2 <- theme(plot.background = element_rect(fill = "whitesmoke"),
@@ -583,7 +587,7 @@ for(team in unique(shotAttemptPlot$Team)) {
   #Shot Attempt Plot
   saPlot <- ggplot(teamPlot, aes(x = SAF60, y = SAA60)) + geom_label_repel(aes(label = Player)) +
     geom_abline(intercept = 0, slope = -1, colour = "grey50", linetype = "dashed") +
-    geom_point(data = teamPlot, aes(size = evTOI)) +
+    geom_point(data = teamPlot, aes(size = evTOI60)) +
     scale_y_continuous(trans = "reverse") + 
     scale_size_continuous("TOI") +
     annotate("text", x = xMin, y = yMin, label = "Bad O\nGood D", colour = "red", size = 3) +
@@ -634,11 +638,18 @@ for(team in unique(shotAttemptPlot$Team)) {
   #order on rank
   toiPlot <- toiPlot[order(toiPlot$rank),]
   
+  #Divide values by 60 for data labels
+  toiPlot$dataLabel = round(toiPlot$value/60, 2)
+  
+  #Specific colors for each level
+  toiPlot$textColor <- ifelse(toiPlot$variable == "pkTOI", "white", "black")
+  
 
   #plot
   palette <- c("grey0", "grey50", "grey80")
-  toiVis <- ggplot(toiPlot, aes(reorder(factor(Player), -rank), value, fill = factor(variable, levels = c("pkTOI", "ppTOI", "evTOI")))) +
+  toiVis <- ggplot(toiPlot, aes(reorder(factor(Player), -rank), value, fill = factor(variable, levels = c("pkTOI", "ppTOI", "evTOI")), label = dataLabel)) +
     geom_bar(colour ="black", stat = "identity") + coord_flip() +
+    geom_label(data = subset(toiPlot, dataLabel != 0), size = 3, position = position_stack(vjust = 0.5), fill = "white", colour = "black") +
     my_theme2 +
     theme(axis.title.x = element_blank(),
           axis.text.x = element_blank(),
