@@ -4,6 +4,8 @@
 import xml.etree.ElementTree as ET
 import pandas as pd
 import datetime as dt
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def calorie_summary(cal_goal):
     #cal_goal = 17500
@@ -165,6 +167,24 @@ def calorie_summary(cal_goal):
     avg_goal = round(f_health_now_wk.loc[1, 'burn_pace_for_goal'],2)
     days_remaining = 7 - f_health_now_wk.loc[1, 'est_start_date']
 
+    # Build weekly plot with calorie target as goal for trends
+
+    # first full week was may 26
+    f_plot = f_health_wk.copy()
+
+    f_plot = f_plot[f_plot['week_start_mon'] > '2025-05-25']
+
+    # Build the plot
+    viz = sns.barplot(x='week_start_mon', y='total_cals', data=f_plot)
+
+    # Is this really the best way to add data labels?
+    for container in viz.containers:
+        viz.bar_label(container)
+
+    # Horizontal line at calorie goal
+    plt.axhline(y=cal_goal, color='green', linestyle='--', label='Target')
+
+
     # Print a long concatenated summary
     summary = f"""
 
@@ -175,7 +195,4 @@ def calorie_summary(cal_goal):
 
     Here is an overview of your calories burned so far this week
     """
-    return print(summary), print(f_health_now)
-
-
-
+    return print(summary), print(f_health_now), plt.show()
